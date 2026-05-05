@@ -1,0 +1,4 @@
+# Requirements minimo para o pipeline_cloud (GH Actions / Linux).
+# NAO inclui xlwings nem openpyxl (so usados pelo pipeline local que escreve no Excel).
+xlrd>=2.0.2
+matplotlib>=3.10

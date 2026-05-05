@@ -1,0 +1,43 @@
+name: Margem Futura - pipeline cloud
+
+on:
+  schedule:
+    # 21:30 UTC = 18:30 BRT (Brasil sem horario de verao -> UTC-3 fixo).
+    # OBS: GitHub cron tem delay tipico de 5-15min em horario de pico.
+    - cron: '30 21 * * *'
+  workflow_dispatch:  # permite rodar manualmente via UI
+
+jobs:
+  run-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: requirements-cloud.txt
+
+      - name: Install deps
+        run: pip install -r requirements-cloud.txt
+
+      - name: Run pipeline cloud
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python pipeline_cloud.py
+
+      - name: Upload artifacts (PNG + log)
+        if: always()  # mesmo se o run falhar, sobe o que tiver
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-output-${{ github.run_id }}
+          path: |
+            logs/preview_cloud_*.png
+            logs/pipeline_cloud_*.log
+          retention-days: 30

@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+.pytest_cache/
+
+# Secrets — NUNCA commitar
+telegram_config.json
+
+# Outro projeto (Boviplan / Automacao Gerencial) que vive no mesmo diretorio
+# por motivos historicos. Contem dados financeiros sensiveis. Nao versionar.
+Claude Cowork/
+
+# Excel local (fonte da verdade do pipeline local; cloud nao usa)
+# Comente se quiser versionar o .xlsm
+Três Marias - Cálculo de Margem Futura.xlsm
+Três Marias - Cálculo de Margem Futura.xlsx
+~$*.xlsm
+~$*.xlsx
+
+# Outputs/logs locais (gerados; nao precisam versionamento)
+logs/
+cepea_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
