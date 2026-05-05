@@ -23,7 +23,7 @@ from cepea_collector import collect as collect_cepea, BezerroSnapshot
 from datagro_collector import collect as collect_datagro, DatagroSnapshot
 from scot_collector import collect as collect_scot, ScotSnapshot
 from calibracao import RowState, calibrate, ANCHOR_ROW, LAST_ROW
-from atualizar_planilha import (
+from pipeline_core import (
     coleta_com_retry, computar_O, calcular_B, linha_por_peso,
     SCOT_LINHAS, DATAGRO_LINHAS,
 )

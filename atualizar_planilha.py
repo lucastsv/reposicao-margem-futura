@@ -7,12 +7,9 @@ Pre-requisito: Excel deve estar fechado (o .xlsm fica em uso exclusivo).
 """
 
 from __future__ import annotations
-import socket
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from urllib.error import URLError
 
 import openpyxl
 
@@ -20,25 +17,10 @@ from cepea_collector import collect as collect_cepea, BezerroSnapshot
 from datagro_collector import collect as collect_datagro, DatagroSnapshot
 from scot_collector import collect as collect_scot, ScotSnapshot
 from calibracao import RowState, calibrate, ANCHOR_ROW, LAST_ROW
-
-# Retry de rede: cobre falhas transitorias (ex.: DNS ainda subindo apos PC acordar
-# via WakeToRun, ou blip de conexao). 3 tentativas, backoff 30s/60s.
-RETRY_BACKOFFS_SEC = (30, 60)
-RETRY_EXCEPTIONS = (URLError, TimeoutError, ConnectionError, socket.gaierror)
-
-
-def coleta_com_retry(nome, fn, log, _sleep=time.sleep):
-    """Roda fn() com retry em erros de rede. Re-lanca a ultima exception se esgotar."""
-    for i, backoff in enumerate((0,) + RETRY_BACKOFFS_SEC):
-        if backoff:
-            log(f"{nome}: aguardando {backoff}s antes de retentar (tentativa {i+1}/3)")
-            _sleep(backoff)
-        try:
-            return fn()
-        except RETRY_EXCEPTIONS as e:
-            if i == len(RETRY_BACKOFFS_SEC):
-                raise
-            log(f"{nome}: falha de rede ({e}); vai retentar")
+from pipeline_core import (
+    coleta_com_retry, computar_O, calcular_B, linha_por_peso,
+    SCOT_LINHAS, DATAGRO_LINHAS,
+)
 
 XLSM = Path(__file__).parent / "Três Marias - Cálculo de Margem Futura.xlsm"
 SHEET = "Preço Reposição"
@@ -46,35 +28,6 @@ LOG_DIR = Path(__file__).parent / "logs"
 
 # Colunas (1-indexadas): B=2, H=8, O=15, P=16, Q=17, R=18, S=19, T=20
 COL_B, COL_H, COL_O, COL_P, COL_Q, COL_R, COL_S, COL_T = 2, 8, 15, 16, 17, 18, 19, 20
-
-# Mapeamento de categorias -> linha Excel.
-# DATAGRO e SCOT compartilham as mesmas linhas (alinhadas com peso de referencia SCOT,
-# que bate com B exato). Co-localizacao garante que O = AVG(S, T) reconcilie as fontes.
-SCOT_LINHAS = {
-    "desmama":   26,   # 195 kg (B exato)
-    "bezerro":   23,   # 240 kg (B exato)
-    "garrote":   19,   # 300 kg (B exato)
-    "boi_magro": 14,   # 375 kg (B exato)
-}
-DATAGRO_LINHAS = SCOT_LINHAS
-
-
-def linha_por_peso(peso_kg: float, rows: list[RowState]) -> int:
-    """Retorna o index (0-based) da row cuja B esta mais proxima de peso_kg."""
-    return min(range(len(rows)), key=lambda i: abs(rows[i].B - peso_kg))
-
-
-def computar_O(q, r, s, t) -> float:
-    """Replica IFERROR(AVERAGE(Q:T), 0) — ignora celulas vazias/None."""
-    vals = [v for v in (q, r, s, t) if v is not None and v > 0]
-    return sum(vals) / len(vals) if vals else 0.0
-
-
-def calcular_B(row: int) -> float:
-    """B eh deterministico: B29=150, cada linha pra cima soma 15kg.
-    Independente de openpyxl pra evitar cache stale de formulas.
-    """
-    return 150.0 + (LAST_ROW - row) * 15.0
 
 
 def ler_estado(ws) -> tuple[list[RowState], list[dict]]:
