@@ -24,6 +24,9 @@ Três Marias - Cálculo de Margem Futura.xlsx
 logs/
 cepea_cache/
 
+# data/ versionado (snapshot CEPEA fica la — fonte de verdade pro cloud).
+# Caso adicione outros arquivos efemeros em data/, listar individualmente aqui.
+
 # IDE
 .vscode/
 .idea/

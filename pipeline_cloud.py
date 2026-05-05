@@ -19,7 +19,8 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from cepea_collector import collect as collect_cepea, BezerroSnapshot
+from cepea_collector import BezerroSnapshot
+from cepea_snapshot import load as load_cepea_snapshot
 from datagro_collector import collect as collect_datagro, DatagroSnapshot
 from scot_collector import collect as collect_scot, ScotSnapshot
 from calibracao import RowState, calibrate, ANCHOR_ROW, LAST_ROW
@@ -129,13 +130,21 @@ def main() -> int:
 
     log("Inicio pipeline cloud-ready (sem Excel).")
 
-    # 1) Coletas com retry
+    # 1) CEPEA: le do snapshot versionado (CEPEA bloqueia IPs de datacenter -> 403).
+    # O snapshot eh atualizado pelo cepea_local_runner.py (Task Scheduler 11h no PC).
     try:
-        snap_cepea = coleta_com_retry("CEPEA", collect_cepea, log)
-    except Exception as e:
-        log(f"ERRO coleta CEPEA: {e}")
+        snap_cepea, snap_em = load_cepea_snapshot()
+    except FileNotFoundError as e:
+        log(f"ERRO: {e}")
         return 2
-    log(f"CEPEA OK: peso={snap_cepea.peso_medio_kg:.1f}kg media4d=R${snap_cepea.media_4d_preco:,.2f}")
+    idade_dias = (datetime.now() - snap_em).days
+    log(f"CEPEA (snapshot {snap_em:%Y-%m-%d %H:%M}, idade {idade_dias}d): "
+        f"peso={snap_cepea.peso_medio_kg:.1f}kg "
+        f"({snap_cepea.data_ultimo_peso}), "
+        f"media4d=R${snap_cepea.media_4d_preco:,.2f} "
+        f"({snap_cepea.data_ultimo_preco})")
+    if idade_dias > 3:
+        log(f"AVISO: snapshot CEPEA com {idade_dias}d — local runner pode ter falhado")
 
     try:
         snap_dg = coleta_com_retry("DATAGRO", collect_datagro, log)
