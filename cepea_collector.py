@@ -45,7 +45,21 @@ def _baixar_xls(url: str, destino: Path) -> None:
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    # Headers completos pra parecer browser real (CEPEA bloqueia bots/IPs suspeitos
+    # com 403 quando faltam headers de Accept-* ou Referer).
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "*/*",
+        "Accept-Language": "pt-BR,pt;q=0.9,en;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Referer": "https://www.cepea.org.br/",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-site",
+    }
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=120, context=ctx) as r:
         data = r.read()
     destino.parent.mkdir(parents=True, exist_ok=True)
