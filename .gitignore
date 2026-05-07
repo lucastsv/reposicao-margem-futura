@@ -15,8 +15,8 @@ Claude Cowork/
 
 # Excel local (fonte da verdade do pipeline local; cloud nao usa)
 # Comente se quiser versionar o .xlsm
-Três Marias - Cálculo de Margem Futura.xlsm
-Três Marias - Cálculo de Margem Futura.xlsx
+planilha/Três Marias - Cálculo de Margem Futura.xlsm
+planilha/Três Marias - Cálculo de Margem Futura.xlsx
 ~$*.xlsm
 ~$*.xlsx
 

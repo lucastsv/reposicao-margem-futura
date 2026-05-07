@@ -54,7 +54,7 @@ def gerar(xlsm_path: Path, sheet: str, output_path: Path, range_addr: str = RANG
 
 
 if __name__ == "__main__":
-    XLSM = Path(__file__).parent / "Três Marias - Cálculo de Margem Futura.xlsm"
+    XLSM = Path(__file__).parent / "planilha" / "Três Marias - Cálculo de Margem Futura.xlsm"
     out = Path(__file__).parent / "logs" / "preview.png"
     out.parent.mkdir(exist_ok=True)
     gerar(XLSM, "Preço Reposição", out)

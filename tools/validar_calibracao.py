@@ -7,11 +7,15 @@ e mostra lado a lado: agios atuais vs novos agios, desvios L/O atuais vs novos.
 Tolerancia de validacao: linhas-ancora (com cotacao) devem ficar com |L/O - 1| < 1%.
 """
 
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
 import openpyxl
 from calibracao import RowState, calibrate, L, deviation_pct, ANCHOR_ROW, LAST_ROW
 
-XLSX = Path(__file__).parent / "Três Marias - Cálculo de Margem Futura.xlsx"
+XLSX = Path(__file__).resolve().parent.parent / "planilha" / "Três Marias - Cálculo de Margem Futura.xlsx"
 SHEET = "Preço Reposição"
 
 
@@ -36,7 +40,7 @@ def fmt_pct(x):
 
 def main():
     current = read_state()
-    new = calibrate(current)
+    new, rebeldes = calibrate(current)
 
     print(f"{'lin':>3} {'B':>5} {'O':>9} | {'P_atual':>8} {'L_atual':>9} {'desvio':>8} | {'P_novo':>8} {'L_novo':>9} {'desvio':>8}")
     print("-" * 95)
@@ -44,9 +48,11 @@ def main():
     anchors_after = 0
     for c, n in zip(current, new):
         anchor_marker = " *" if c.O > 0 else "  "
+        if c.row in rebeldes:
+            anchor_marker = " R"  # rebelde descartada
         dev_c = deviation_pct(c)
         dev_n = deviation_pct(n)
-        if dev_n is not None:
+        if dev_n is not None and c.row not in rebeldes:
             max_dev_after = max(max_dev_after, abs(dev_n))
             anchors_after += 1
         print(
@@ -56,8 +62,10 @@ def main():
         )
 
     print()
-    print(f"Linhas-ancora (* marcadas): {anchors_after}")
-    print(f"Maior desvio L/O apos calibracao: {max_dev_after*100:.4f}%")
+    print(f"Linhas-ancora aceitas (* marcadas): {anchors_after}")
+    if rebeldes:
+        print(f"Ancoras rebeldes descartadas (R marcadas): linhas {rebeldes}")
+    print(f"Maior desvio L/O apos calibracao (so ancoras aceitas): {max_dev_after*100:.4f}%")
     print(f"Tolerancia: 1.00%  ->  {'OK' if max_dev_after < 0.01 else 'FALHA'}")
 
 

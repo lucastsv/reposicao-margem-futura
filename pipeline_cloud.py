@@ -165,10 +165,12 @@ def main() -> int:
 
     # 2) Constroi RowState e calibra (tudo Python puro)
     rows = construir_rows(snap_cepea, snap_dg, snap_scot)
-    new_rows = calibrate(rows)
+    new_rows, rebeldes = calibrate(rows)
     log(f"Calibrado: H7={new_rows[0].H:.2f}, H{LAST_ROW}={new_rows[-1].H:.2f}")
     n_ancoras = sum(1 for r in rows if r.O > 0)
     log(f"  {n_ancoras} ancoras de mercado encontradas")
+    if rebeldes:
+        log(f"  Ancoras rebeldes descartadas: linhas {rebeldes}")
 
     # 3) Mapeia pra estrutura do renderer
     linhas_tabela = rows_para_linhas_tabela(new_rows)

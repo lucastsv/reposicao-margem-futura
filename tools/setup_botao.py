@@ -15,8 +15,8 @@ import sys
 import win32com.client as win32
 
 PROJECT = r"C:\PYTHON\projeto_automacao_gerencial"
-XLSX = os.path.join(PROJECT, "Três Marias - Cálculo de Margem Futura.xlsx")
-XLSM = os.path.join(PROJECT, "Três Marias - Cálculo de Margem Futura.xlsm")
+XLSX = os.path.join(PROJECT, "planilha", "Três Marias - Cálculo de Margem Futura.xlsx")
+XLSM = os.path.join(PROJECT, "planilha", "Três Marias - Cálculo de Margem Futura.xlsm")
 SHEET = "Preço Reposição"
 VENV_PY = os.path.join(PROJECT, "venv", "Scripts", "python.exe")
 

@@ -27,8 +27,14 @@ def recalibrar():
             O=float(sht.range(f"O{r}").value or 0),
         ))
 
-    new = calibrate(rows)
+    new, rebeldes = calibrate(rows)
 
     # Escreve apenas P (col 16) das linhas pos-ancora. Linha 7 (P7) eh seed manual.
     for s in new[1:]:
         sht.range(f"P{s.row}").value = s.P
+
+    if rebeldes:
+        # Sinaliza no Excel: status no canto superior da aba (cell A1 ou similar fica
+        # ocupado; usa Q1 que esta no header da tabela direita).
+        # Mantem visivel sem popup pra nao bloquear.
+        print(f"AVISO: ancoras rebeldes descartadas: linhas {rebeldes}")

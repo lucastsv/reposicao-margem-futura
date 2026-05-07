@@ -22,7 +22,7 @@ from pipeline_core import (
     SCOT_LINHAS, DATAGRO_LINHAS,
 )
 
-XLSM = Path(__file__).parent / "Três Marias - Cálculo de Margem Futura.xlsm"
+XLSM = Path(__file__).parent / "planilha" / "Três Marias - Cálculo de Margem Futura.xlsm"
 SHEET = "Preço Reposição"
 LOG_DIR = Path(__file__).parent / "logs"
 
@@ -120,6 +120,13 @@ def main() -> int:
     cotacoes[idx_cepea]["r"] = snap_cepea.media_4d_preco
     rows[idx_cepea].O = computar_O(**cotacoes[idx_cepea])
 
+    # Coluna R eh propriedade do script CEPEA — limpa R em linhas que nao sao
+    # a do CEPEA do dia, pra evitar que valor stale do run anterior vire ancora.
+    for i, r_state in enumerate(rows):
+        if r_state.row != linha_cepea and cotacoes[i]["r"] is not None:
+            cotacoes[i]["r"] = None
+            rows[i].O = computar_O(**cotacoes[i])
+
     # DATAGRO: atualiza H7 (ancora) e S das linhas mapeadas com R$/kg * B
     rows[0].H = snap_dg.boi_gordo_ms_arroba  # rows[0] = linha 7 (ancora)
 
@@ -166,7 +173,10 @@ def main() -> int:
         rows[idx_dg].O = computar_O(**cotacoes[idx_dg])
 
     # Calibra com estado atualizado
-    new_rows = calibrate(rows)
+    new_rows, rebeldes = calibrate(rows)
+    if rebeldes:
+        log(f"Ancoras rebeldes descartadas (geraria agio negativo): "
+            f"linhas {rebeldes}")
 
     # Reabre wb com formulas (sem data_only) pra escrever
     wb = openpyxl.load_workbook(XLSM, keep_vba=True)
@@ -175,6 +185,15 @@ def main() -> int:
     # H7 (ancora boi gordo MS DATAGRO)
     ws.cell(row=ANCHOR_ROW, column=COL_H).value = snap_dg.boi_gordo_ms_arroba
     log(f"Escrito H{ANCHOR_ROW} = {snap_dg.boi_gordo_ms_arroba:.2f} (DATAGRO boi gordo MS)")
+
+    # Limpa R das linhas que nao sao a CEPEA do dia (sweep) — peso medio CEPEA
+    # muda entre runs e desloca a linha alvo, deixando R stale na linha antiga.
+    for r in range(ANCHOR_ROW + 1, LAST_ROW + 1):
+        if r != linha_cepea:
+            celula = ws.cell(row=r, column=COL_R)
+            if celula.value is not None:
+                log(f"Limpo R{r} (era stale)")
+                celula.value = None
 
     # CEPEA bezerro
     ws.cell(row=linha_cepea, column=COL_R).value = snap_cepea.media_4d_preco
