@@ -1,13 +1,9 @@
 {
-  "media_4d_preco": 3394.1075,
-  "peso_medio_kg": 207.1,
-  "data_ultimo_preco": "2026-08-27",
-  "data_ultimo_peso": "2026-08-27",
+  "media_4d_preco": 3396.88,
+  "peso_medio_kg": 207.31,
+  "data_ultimo_preco": "2026-08-28",
+  "data_ultimo_peso": "2026-08-28",
   "ultimos_4_precos": [
-    [
-      "2026-08-24",
-      3393.49
-    ],
     [
       "2026-08-25",
       3389.51
@@ -19,7 +15,11 @@
     [
       "2026-08-27",
       3399.0
+    ],
+    [
+      "2026-08-28",
+      3404.58
     ]
   ],
-  "coletado_em": "2026-08-28T11:00:29"
+  "coletado_em": "2026-08-29T11:00:37"
 }
