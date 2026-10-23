@@ -17,9 +17,9 @@ publicas (CEPEA, DATAGRO, SCOT) e envia tabela diaria pelo Telegram.
 
 Arquitetura **hibrida local + cloud**:
 
-- **Local** (Task Scheduler 19:30): coleta + escrita no `.xlsm`
-  preservando historico Excel. Disparado por `atualizar_planilha.py`.
-- **Local** (Task Scheduler "CEPEA Local Runner", 11:00 + AtLogOn):
+- **Local** (seg-sex 19:30, disparado pela Central de Rotinas do PC): coleta
+  + escrita no `.xlsm` preservando historico Excel. Script `atualizar_planilha.py`.
+- **Local** (11:00, disparado pela Central de Rotinas; ate 3 tentativas a cada 2 h):
   coleta CEPEA e da push do snapshot pro repo
   `github.com/lucastsv/reposicao-margem-futura`. Existe porque CEPEA
   bloqueia IPs Azure/datacenter.
@@ -85,8 +85,8 @@ varios pontos de integracao:
 - `xlwings.conf` (aba oculta da planilha) tem `PYTHONPATH` apontando pra
   raiz. O VBA chama `import excel_runner`. Mover quebra o botao
   `Recalibrar Agios`.
-- Task Scheduler `AutomacaoGerencial-MargemFutura` e `CEPEA Local Runner`
-  tem `Iniciar em: C:\PYTHON\projeto_automacao_gerencial`.
+- A Central de Rotinas roda os dois scripts locais com a pasta
+  `C:\PYTHON\projeto_automacao_gerencial` (cadastro `rotinas.toml` da Central).
 - Workflow `.github/workflows/cloud_pipeline.yml` chama
   `python pipeline_cloud.py` na raiz do repo `reposicao-margem-futura`.
 
@@ -94,14 +94,20 @@ varios pontos de integracao:
 fazer o refactor maior: criar `margem_futura/` e `boviplan/` lado a
 lado, atualizar workflow + scheduler + xlwings.conf de uma vez.
 
-## Tarefas agendadas (Task Scheduler)
+## Agendamento das rotinas locais
 
-| Nome                              | Agendamento           | Acao                                      |
-|-----------------------------------|-----------------------|-------------------------------------------|
-| AutomacaoGerencial-MargemFutura   | Diaria 19:30          | `python atualizar_planilha.py`            |
-| CEPEA Local Runner                | Diaria 11:00 + AtLogOn | `python cepea_local_runner.py`            |
+Desde 23/10/2026 quem dispara as rotinas locais e' a **Central de Rotinas**
+(`C:\PYTHON\central_rotinas`, no PC do Lucas): sem janela, em ordem, com
+novas tentativas no CEPEA, e conferindo o resultado num boletim diario. As
+tarefas antigas do Task Scheduler ficaram **DESLIGADAS** de proposito
+(religar = rodar em dobro; a Central recusa disparar e acusa no boletim).
+Horario e tentativas mudam no `rotinas.toml` da Central, nao aqui.
 
-Ambas com `Iniciar em: C:\PYTHON\projeto_automacao_gerencial`.
+| Rotina                  | Quando                          | Acao                            | Tarefa antiga (desligada)         |
+|-------------------------|---------------------------------|---------------------------------|-----------------------------------|
+| Planilha Margem Futura  | seg-sex 19:30 (acorda o PC)     | `python atualizar_planilha.py`  | AutomacaoGerencial-MargemFutura   |
+| CEPEA (snapshot)        | 11:00 + ate 3 tentativas a cada 2 h | `python cepea_local_runner.py` | CEPEA Local Runner (criada como administrador) |
+| Verificacao de saude    | desligada em 23/10/2026         | `python tools/verificar_saude.py` | AutomacaoGerencial-VerificarSaude |
 
 ## Repositorio cloud
 

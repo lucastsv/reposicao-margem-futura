@@ -18,6 +18,11 @@ Verificar no GitHub se o commit chegou.
 
 ## 2. Configurar Task Scheduler (Windows)
 
+> **Desde 23/10/2026 NAO crie esta tarefa.** Quem dispara o runner e' a Central de
+> Rotinas do PC (`C:\PYTHON\central_rotinas`): 11:00, sem janela, com ate 3 tentativas a
+> cada 2 h. A tarefa "CEPEA Local Runner" ficou DESLIGADA de proposito; religar faria o
+> runner rodar em dobro. O passo a passo abaixo fica so como referencia (plano B).
+
 Criar tarefa agendada que rode todo dia 11h **mesmo se o PC estiver desligado/dormindo**:
 
 ### Via Task Scheduler GUI
