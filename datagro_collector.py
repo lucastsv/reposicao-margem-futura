@@ -8,7 +8,7 @@ Fontes (SVG):
 
   nelore       : https://pec.datagro.com/pec/mapas/nelore.svg
     Tabela reposicao Nelore R$/kg vivo x estado x categoria.
-    10 estados (ordem por y): SP, MG, MS, MT, GO, TO, PA, PR, RS, RO.
+    10 estados (ordem por y): SP, MG, MS, MT, GO, TO, PA, PR, RS, RO (leitura pela ORDEM).
     8 categorias (ordem por x): Desmama M, Bezerro M, Garrote M, Boi Magro M,
                                 Desmama F, Bezerra F, Novilha F, Vaca Magra F.
 
@@ -36,16 +36,19 @@ USER_AGENT = (
 )
 REFERER = "https://www.indicadordoboi.com.br/"
 
-# Mapeamento por coordenada y -> estado em nelore.svg (descoberto em 2026-04-29)
-NELORE_Y_TO_STATE = {
-    240: "SP", 270: "MG", 300: "MS", 330: "MT", 360: "GO",
-    420: "TO", 450: "PA", 480: "PR", 510: "RS", 540: "RO",
-}
-# Mapeamento por coordenada x -> categoria em nelore.svg
-NELORE_X_TO_CATEGORY = {
-    154: "desmama_m", 233: "bezerro_m", 312: "garrote_m", 391: "boi_magro_m",
-    470: "desmama_f", 549: "bezerra_f", 628: "novilha_f", 707: "vaca_magra_f",
-}
+# Tabela do nelore.svg (conferida em 15/11/2026 com o SVG desenhado como imagem: o layout e' o
+# mesmo desde 29/04/2026). Os numeros sao <text> com transform matrix(...); as LINHAS (estados) e
+# as COLUNAS (categorias) sao lidas pela ORDEM das coordenadas, nao por posicao fixa:
+#   linhas  y = 247, 279, 311, ..., 535 (passo 32)  -> NELORE_ESTADOS
+#   colunas x = 154, 233, 312, ..., 707 (passo 79)  -> NELORE_CATEGORIAS
+# Se a Datagro mudar o numero de linhas/colunas, a coleta PARA com erro (nunca le a celula errada).
+# Faixas de peso da Datagro (legenda do SVG): desmama 0-180 kg, bezerro 180-240, garrote 240-300,
+# boi magro 300-400. Media a vista ponderada de ate 3 dias uteis (por isso oscila em praca com
+# poucos negocios, ex.: garrote MS).
+NELORE_ESTADOS = ("SP", "MG", "MS", "MT", "GO", "TO", "PA", "PR", "RS", "RO")
+NELORE_CATEGORIAS = ("desmama_m", "bezerro_m", "garrote_m", "boi_magro_m",
+                     "desmama_f", "bezerra_f", "novilha_f", "vaca_magra_f")
+_MESMA_LINHA = 4.0   # textos com y a menos de 4 px sao da mesma linha
 
 
 @dataclass
@@ -94,8 +97,19 @@ def parse_boletim_cinco(svg: str) -> tuple[float, str]:
     return ms_ultimo, data_ultimo
 
 
-def parse_nelore(svg: str, estado: str = "MS") -> dict[str, float]:
-    """Retorna dict {categoria: R$/kg} para o estado pedido."""
+def _agrupar(valores: list[float], tolerancia: float = _MESMA_LINHA) -> list[float]:
+    """Coordenadas distintas (ordenadas), juntando as que diferem menos que a tolerancia."""
+    grupos: list[list[float]] = []
+    for v in sorted(valores):
+        if grupos and v - grupos[-1][-1] < tolerancia:
+            grupos[-1].append(v)
+        else:
+            grupos.append([v])
+    return [sum(g) / len(g) for g in grupos]
+
+
+def ler_tabela_nelore(svg: str) -> dict[str, dict[str, float]]:
+    """Tabela inteira {estado: {categoria: R$/kg}}, pela ordem das linhas e colunas do SVG."""
     pontos: list[tuple[float, float, float]] = []
     for m in re.finditer(r'<text\s+([^>]*?)>([^<]+)</text>', svg):
         attrs = m.group(1)
@@ -106,25 +120,34 @@ def parse_nelore(svg: str, estado: str = "MS") -> dict[str, float]:
         nums = re.findall(r"-?\d+(?:\.\d+)?", tm.group(1))
         if len(nums) < 6:
             continue
-        x, y = float(nums[4]), float(nums[5])
         if not re.fullmatch(r"-?\d+,\d+", texto):
             continue
-        pontos.append((x, y, _br_to_float(texto)))
+        pontos.append((float(nums[4]), float(nums[5]), _br_to_float(texto)))
+    linhas = _agrupar([y for _, y, _ in pontos])
+    colunas = _agrupar([x for x, _, _ in pontos], tolerancia=20.0)
+    if len(linhas) != len(NELORE_ESTADOS) or len(colunas) != len(NELORE_CATEGORIAS):
+        raise RuntimeError(f"nelore.svg mudou de formato: {len(linhas)} linhas x {len(colunas)} colunas "
+                           f"(esperado {len(NELORE_ESTADOS)} x {len(NELORE_CATEGORIAS)}); conferir o "
+                           "SVG antes de ajustar NELORE_ESTADOS/NELORE_CATEGORIAS")
+    tabela: dict[str, dict[str, float]] = {e: {} for e in NELORE_ESTADOS}
+    for x, y, v in pontos:
+        i = min(range(len(linhas)), key=lambda k: abs(linhas[k] - y))
+        j = min(range(len(colunas)), key=lambda k: abs(colunas[k] - x))
+        estado, cat = NELORE_ESTADOS[i], NELORE_CATEGORIAS[j]
+        if cat in tabela[estado]:
+            raise RuntimeError(f"nelore.svg: dois valores em {estado}/{cat}")
+        tabela[estado][cat] = v
+    faltando = [f"{e}/{c}" for e in NELORE_ESTADOS for c in NELORE_CATEGORIAS if c not in tabela[e]]
+    if faltando:
+        raise RuntimeError(f"nelore.svg: celulas vazias {faltando[:4]}")
+    return tabela
 
-    state_to_y = {v: k for k, v in NELORE_Y_TO_STATE.items()}
-    if estado not in state_to_y:
+
+def parse_nelore(svg: str, estado: str = "MS") -> dict[str, float]:
+    """Retorna dict {categoria: R$/kg} para o estado pedido."""
+    if estado not in NELORE_ESTADOS:
         raise ValueError(f"Estado nao mapeado em nelore.svg: {estado}")
-    y_alvo = state_to_y[estado]
-
-    out: dict[str, float] = {}
-    for x_alvo, cat in NELORE_X_TO_CATEGORY.items():
-        candidatos = [v for x, y, v in pontos
-                      if abs(y - y_alvo) <= 15 and abs(x - x_alvo) <= 15]
-        if not candidatos:
-            raise RuntimeError(f"Sem valor em nelore.svg para {estado}/{cat} "
-                               f"(y~{y_alvo}, x~{x_alvo})")
-        out[cat] = candidatos[0]
-    return out
+    return dict(ler_tabela_nelore(svg)[estado])
 
 
 def collect() -> DatagroSnapshot:
