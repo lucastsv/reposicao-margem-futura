@@ -40,7 +40,7 @@ def calcular_D(row: int) -> float:
 
 
 def trunc2(v: float) -> float:
-    """Replica TRUNC(v, 2) do Excel — trunca pra 2 casas (NAO arredonda)."""
+    """Replica TRUNC(v, 2) do Excel - trunca pra 2 casas (NAO arredonda)."""
     return math.floor(v * 100) / 100
 
 
@@ -63,7 +63,7 @@ def construir_rows(
     rows[0].H = snap_dg.boi_gordo_ms_arroba
 
     # Cotacoes por linha (4 colunas: Q manual nao-coletada, R CEPEA, S DATAGRO, T SCOT)
-    q = [None] * n  # Oferta 1 manual — nao coletado
+    q = [None] * n  # Oferta 1 manual - nao coletado
     r_ = [None] * n  # CEPEA
     s = [None] * n  # DATAGRO (rkg * B)
     t = [None] * n  # SCOT (R$/cabeca)
@@ -144,7 +144,7 @@ def main() -> int:
         f"media4d=R${snap_cepea.media_4d_preco:,.2f} "
         f"({snap_cepea.data_ultimo_preco})")
     if idade_dias > 3:
-        log(f"AVISO: snapshot CEPEA com {idade_dias}d — local runner pode ter falhado")
+        log(f"AVISO: snapshot CEPEA com {idade_dias}d \u2014 local runner pode ter falhado")
 
     try:
         snap_dg = coleta_com_retry("DATAGRO", collect_datagro, log)
@@ -180,14 +180,14 @@ def main() -> int:
     render_tabela(
         linhas=linhas_tabela,
         output_path=img_path,
-        rodape="* Fecha o gado no dia anterior à pesagem.",
+        rodape="* Fecha o gado no dia anterior \u00e0 pesagem.",
     )
     log(f"Imagem gerada: {img_path.name}")
 
     # 5) Envia Telegram
     try:
         send_photo(img_path,
-                   caption=f"Preço Reposição MS — {datetime.now():%d/%m/%Y}")
+                   caption=f"Pre\u00e7o Reposi\u00e7\u00e3o MS \u2014 {datetime.now():%d/%m/%Y}")
         log("Notificacao Telegram enviada.")
     except TelegramNotConfigured as e:
         log(f"AVISO: Telegram nao configurado ({e}). Imagem gerada mas nao enviada.")

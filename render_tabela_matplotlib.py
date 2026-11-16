@@ -72,8 +72,8 @@ def render_tabela(
     output_path: Path,
     titulo: str = "COMPRA DE GADO NO PESO*",
     subtitulo: str = (
-        "Exemplos de pesagem para referência de valores. Pagamento com trinta (30) dias.\n"
-        "Distância até 350 Km da fazenda."
+        "Exemplos de pesagem para refer\u00eancia de valores. Pagamento com trinta (30) dias.\n"
+        "Dist\u00e2ncia at\u00e9 350 Km da fazenda."
     ),
     rodape: str | None = None,
 ) -> Path:
@@ -97,7 +97,7 @@ def render_tabela(
     # col 2: faixa arroba
     # col 3: preco faixa (DESTAQUE)
     # col 4: preco kg
-    # col 5: exemplo preço por animal (low_arroba @ = R$ valor)
+    # col 5: exemplo preco por animal (low_arroba @ = R$ valor)
     col_w = [0.245, 0.245, 0.180, 0.150, 0.180]
     col_x = [0.0]
     for w in col_w:
@@ -139,10 +139,10 @@ def render_tabela(
     y1_sh, y0_sh = y0, y0 - h_subheader
     headers = [
         "Faixa de peso",
-        "Faixa de arroba (50% de\nrendimento de carcaça)",
-        "Preços para\nfaixa de peso",
-        "Preço por quilo\npara pesar",
-        "Exemplo de preço\npara o animal por",
+        "Faixa de arroba (50% de\nrendimento de carca\u00e7a)",
+        "Pre\u00e7os para\nfaixa de peso",
+        "Pre\u00e7o por quilo\npara pesar",
+        "Exemplo de pre\u00e7o\npara o animal por",
     ]
     for i, hd in enumerate(headers):
         draw_cell(col_x[i], col_x[i + 1], y0_sh, y1_sh,
@@ -164,10 +164,10 @@ def render_tabela(
             preco_text_color = COR_TEXTO
 
         # Col 1: faixa peso
-        peso_txt = f"{_fmt_kg(ln.peso_low)}  até  {_fmt_kg(ln.peso_high)}"
+        peso_txt = f"{_fmt_kg(ln.peso_low)}  at\u00e9  {_fmt_kg(ln.peso_high)}"
         draw_cell(col_x[0], col_x[1], y0, y1, row_color, peso_txt, fontsize=10)
         # Col 2: faixa arroba
-        arroba_txt = f"{_fmt_arroba(ln.arroba_low)}  até  {_fmt_arroba(ln.arroba_high)}"
+        arroba_txt = f"{_fmt_arroba(ln.arroba_low)}  at\u00e9  {_fmt_arroba(ln.arroba_high)}"
         draw_cell(col_x[1], col_x[2], y0, y1, row_color, arroba_txt, fontsize=10)
         # Col 3: preco faixa (sempre destacada; azul SO se ancora)
         draw_cell(col_x[2], col_x[3], y0, y1, preco_col_color,
@@ -177,7 +177,7 @@ def render_tabela(
         # Col 4: preco kg
         draw_cell(col_x[3], col_x[4], y0, y1, row_color,
                   _fmt_brl(ln.preco_kg, 2), fontsize=10.5)
-        # Col 5: exemplo preço pro animal
+        # Col 5: exemplo preco pro animal
         ex_txt = f"{_fmt_arroba(ln.arroba_exemplo)}  =  {_fmt_brl_compact(ln.preco_animal)}"
         draw_cell(col_x[4], col_x[5], y0, y1, row_color, ex_txt, fontsize=10)
 
@@ -236,6 +236,6 @@ if __name__ == "__main__":
     render_tabela(
         linhas=_dados_demo(),
         output_path=out,
-        rodape="* Fecha o gado no dia anterior à pesagem.",
+        rodape="* Fecha o gado no dia anterior \u00e0 pesagem.",
     )
     print(f"PNG gerado: {out}")

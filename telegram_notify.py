@@ -80,7 +80,7 @@ def _post_multipart(url: str, fields: dict, files: dict) -> bytes:
 
 
 def send_photo(image_path: Path, caption: str = "") -> None:
-    """Envia uma foto pra chat_id configurado. Levanta exceção em erro."""
+    """Envia uma foto pra chat_id configurado. Levanta excecao em erro."""
     token, chat_id = _load_config()
     url = f"{API_BASE}/bot{token}/sendPhoto"
     img_bytes = image_path.read_bytes()
@@ -121,7 +121,7 @@ if __name__ == "__main__":
         print(f"ERRO: rode primeiro `python gerar_imagem.py` para criar {img}")
     else:
         try:
-            send_photo(img, caption="Teste — Margem Futura")
+            send_photo(img, caption="Teste \u2014 Margem Futura")
             print("OK: foto enviada")
         except TelegramNotConfigured as e:
             print(f"AVISO: {e}")
