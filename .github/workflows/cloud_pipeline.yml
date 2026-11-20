@@ -1,10 +1,9 @@
 name: Margem Futura - pipeline cloud
 
 on:
-  schedule:
-    # 21:30 UTC = 18:30 BRT (Brasil sem horario de verao -> UTC-3 fixo).
-    # OBS: GitHub cron tem delay tipico de 5-15min em horario de pico.
-    - cron: '30 21 * * *'
+  # Agendamento DESLIGADO em 19/11/2026 (decisao do Lucas): a imagem diaria agora sai da rotina
+  # `reposicao` do Rancho (pipelines/reposicao, Central de Rotinas seg-sex 19:30), que tambem grava
+  # o historico no banco. Este workflow fica so como RESERVA manual (imagem antiga, sem historico).
   workflow_dispatch:  # permite rodar manualmente via UI
 
 jobs:
